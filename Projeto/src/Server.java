@@ -20,8 +20,49 @@ public class Server {
             users = new Users();
 
         while(1 == 1){
+            System.out.println("Á espera de conexão");
             Socket socket = server.accept();
+            Connection con = new Connection(socket);
 
+            Runnable clientThread = () -> {
+                try (con){
+                    while(true) {
+                        String username = "";
+                        Frame f  = con.receive();
+
+                        System.out.println("Recebii frame com tag = " + f.tag );
+                        // Login Request
+                        if( f.tag == 1 ) {
+                            String[] user_pass = new String(f.data).split(";;");
+                            String recieved_email = user_pass[0];
+                            String recieved_pass = user_pass[1];
+
+                            if( !users.validatePassword(recieved_email, recieved_pass)){
+                                con.sendString( -1, "Email e Password incorretos...");
+                            } else {
+                                con.sendString( 1, "Email e Password corretos");
+                            }
+                        // Register Request
+                        } else if ( f.tag == 2 ){
+                            String[] user_pass = new String(f.data).split(";;");
+                            String recieved_email = user_pass[0];
+                            String recieved_pass = user_pass[1];
+
+                            users.addAccount(recieved_email, recieved_pass);
+                            con.sendData(1, "".getBytes());
+
+                        // Alguma tag não existente
+                        } else {
+                            con.sendString(-1, "Ainda não foi implementado...");
+                        }
+
+                    }
+                } catch( IOException error ){
+                    System.out.println("Error com o cliente " + socket.getLocalAddress());
+                }
+            };
+
+            new Thread(clientThread).start();
 
         }
 

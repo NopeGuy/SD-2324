@@ -3,7 +3,7 @@ import java.net.Socket;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class Connection {
+public class Connection implements AutoCloseable {
 
     private DataInputStream is;
     private DataOutputStream os;
@@ -17,6 +17,9 @@ public class Connection {
     }
 
 
+    public void sendString(int tag, String d) throws IOException {
+        this.send(new Frame(tag, d.getBytes()));
+    }
     public void sendData(int tag, byte[] data) throws IOException {
         this.send(new Frame(tag, data));
     }
@@ -25,17 +28,17 @@ public class Connection {
      */
     public void send(Frame f) throws IOException {
         try {
-            this.rwLock.writeLock().lock();
+            //this.rwLock.writeLock().lock();
             // Escreve o número da operaçao primeiro
-            this.os.write(f.tag);
+            this.os.writeInt(f.tag);
             // Escreve a quantidade de bytes que vao ser enviados
-            this.os.write(f.data.length);
+            this.os.writeInt(f.data.length);
             // Envia os bytes
             this.os.write(f.data);
             // Finaliza e envia
             this.os.flush();
         } finally {
-            this.rwLock.writeLock().unlock();
+            // this.rwLock.writeLock().unlock();
         }
     }
 
@@ -46,14 +49,14 @@ public class Connection {
         int tag;
         byte[] data;
         try {
-            this.rwLock.readLock().lock();
+            //this.rwLock.readLock().lock();
             tag = this.is.readInt();
             int n = this.is.readInt();
             data = new byte[n];
             this.is.readFully(data);
         }
         finally {
-            this.rwLock.readLock().unlock();
+            //this.rwLock.readLock().unlock();
         }
         return new Frame(tag,data);
     }

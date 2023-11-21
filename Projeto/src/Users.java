@@ -18,6 +18,8 @@ public class Users {
         try {
             this.l.readLock().lock();
             return this.database.get(email).equals(password);
+        } catch (Exception e){
+            return false;
         } finally {
             this.l.readLock().unlock();
         }
