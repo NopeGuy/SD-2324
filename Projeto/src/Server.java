@@ -45,20 +45,24 @@ public class Server {
                         // Register Request
                         } else if ( f.tag == 2 ){
                             String[] user_pass = new String(f.data).split(";;");
-                            String recieved_email = user_pass[0];
+                            String recieved_user = user_pass[0];
                             String recieved_pass = user_pass[1];
 
-                            users.addAccount(recieved_email, recieved_pass);
-                            con.sendData(1, "".getBytes());
+                            users.addAccount(recieved_user, recieved_pass);
+                            users.serialize("users.data");
+                            con.sendData(1, "User criado".getBytes());
+                            username = recieved_user;
 
                         // Alguma tag não existente
-                        } else {
+                        } else if( f.tag == 30 ) {
+                            sd23.JobFunction.execute(f.data);
+                        }else {
                             con.sendString(-1, "Ainda não foi implementado...");
                         }
 
                     }
                 } catch( IOException error ){
-                    System.out.println("Error com o cliente " + socket.getLocalAddress());
+                    System.out.println("Error com o cliente " + socket.getLocalAddress() + " :" + error.getMessage());
                 }
             };
 

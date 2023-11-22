@@ -49,14 +49,14 @@ public class Connection implements AutoCloseable {
         int tag;
         byte[] data;
         try {
-            //this.rwLock.readLock().lock();
+            this.rwLock.readLock().lock();
             tag = this.is.readInt();
             int n = this.is.readInt();
             data = new byte[n];
             this.is.readFully(data);
         }
         finally {
-            //this.rwLock.readLock().unlock();
+            this.rwLock.readLock().unlock();
         }
         return new Frame(tag,data);
     }

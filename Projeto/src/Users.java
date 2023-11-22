@@ -2,7 +2,7 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class Users {
+public class Users implements Serializable {
 
     private final HashMap<String, String> database;
     public ReentrantReadWriteLock l = new ReentrantReadWriteLock();
@@ -57,14 +57,14 @@ public class Users {
      */
     public void serialize(String fileLocation) throws IOException {
         try {
-            this.l.writeLock().lock();
+            //this.l.writeLock().lock();
             FileOutputStream fileStream = new FileOutputStream(fileLocation);
             ObjectOutputStream outputStream = new ObjectOutputStream(fileStream);
             outputStream.writeObject(this);
             outputStream.close();
             fileStream.close();
         } finally {
-            this.l.writeLock().unlock();
+            //this.l.writeLock().unlock();
         }
 
     }
