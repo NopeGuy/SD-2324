@@ -8,7 +8,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class TasksExecutor implements Serializable {
 
-    private final int MAX_MEMORY = 1 * (1000000);
+    private final int MAX_MEMORY = 1 * (5000);
     private int ACTUAL_MEMORY = 0;
     private final Queue<Task> taskQueue;
     private final ReentrantLock lock;
@@ -33,7 +33,7 @@ public class TasksExecutor implements Serializable {
         public void executeTask(){
             try{
                 byte[] out = sd23.JobFunction.execute(this.data);
-                this.c.sendData(30, taskID, out);
+                this.c.sendData(31, taskID, out);
             } catch (IOException e) {
                 // CONNECTION CLOSED Provavelment
             } catch (Exception exc) {
@@ -62,10 +62,11 @@ public class TasksExecutor implements Serializable {
                 taskQueue.add(new Task(taskId++, data, c));
                 condition.signal();
             } else {
-                System.out.println("Tarefa não adicionada: excede a memória disponível");
+                c.sendData(31, 0, "ERRO: SEM MEMORIA".getBytes());
             }
             condition.signal(); // Sinaliza à thread que há novas tarefas
-        } finally {
+        } catch (Exception e){}
+        finally {
             lock.unlock();
         }
     }

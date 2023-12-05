@@ -22,7 +22,7 @@ public class Client {
                 String password = stdin.readLine();
                 cd.sendString(1, 0, email + ";;" + password);
                 Frame f = cd.receive(1);
-                if (new String(f.data).startsWith("ERROR")){
+                if (new String(f.data).startsWith("ERRO")){
                     System.out.print(new String(f.data));
                 } else {
                     System.out.println("Login com sucesso..");
@@ -36,7 +36,7 @@ public class Client {
                 String password = stdin.readLine();
                 cd.sendString(2, 0,user + ";;" + password);
                 Frame f = cd.receive(1);
-                if (new String(f.data).startsWith("ERROR")){
+                if (new String(f.data).startsWith("ERRO")){
                     System.out.print(new String(f.data));
                 } else {
                     System.out.println("Login com sucesso..");
@@ -62,12 +62,12 @@ public class Client {
                 while(!tarefaEnviada) {
                     System.out.println("Introduza a localização do Programa: ");
                     String pn = stdin.readLine();
-
                         new Thread(() -> {
                             try {
                                 FileInputStream fis = new FileInputStream(new File(pn));
                                 cd.send(30, 0, fis.readAllBytes());
-                                Frame respostaTarefa = cd.receive(30);
+                                Frame respostaTarefa = cd.receive(31);
+
                                 if(new String(respostaTarefa.data).startsWith("ERRO")){
                                     System.out.println("Erro do Servidor (tag="+respostaTarefa.tag+"): " + new String(respostaTarefa.data));
                                 } else {
@@ -86,11 +86,11 @@ public class Client {
             } else if( choice.equals("2")) {
                 cd.send(40, 0, new byte[0]);
                 System.out.println("Status do Servidor (ATUAL/MAX)\n" +
-                        new String(cd.receive(40).data));
+                        new String(cd.receive(41).data));
             } else if (choice.equals("3")) {
 
             } else if (choice.equals("9")){
-
+                c.close();
             } else{
                 System.out.println("Não existe nada com essa opção...");
             }

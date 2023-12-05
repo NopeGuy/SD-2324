@@ -69,9 +69,9 @@ public class Server {
                             tasksExecutor.addTask(f.data, con);
                         // Get status do Servidor
                         }else if (f.tag == 40) {
-                            con.sendData(40, 0, tasksExecutor.getStatus());
+                            con.sendData(41, 0, tasksExecutor.getStatus());
                         // Alguma tag não existente
-                        }else {
+                        } else {
                             con.sendString(-1, 0, "Ainda não foi implementado...");
                         }
 
