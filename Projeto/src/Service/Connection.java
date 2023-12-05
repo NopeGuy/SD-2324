@@ -1,13 +1,17 @@
+package Service;
+
 import java.io.*;
 import java.net.Socket;
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Connection implements AutoCloseable {
 
     private DataInputStream is;
     private DataOutputStream os;
-    private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
+    private ReentrantLock readLock = new ReentrantLock();
+    private ReentrantLock writeLock = new ReentrantLock();
 
     private Socket socket;
     public Connection(Socket s) throws IOException {
@@ -31,7 +35,10 @@ public class Connection implements AutoCloseable {
      */
     public void send(Frame f) throws IOException {
         try {
-            //this.rwLock.writeLock().lock();
+            if(Client.DEBUG){
+                System.out.println("SEND TAG = " + f.tag + "\n");
+            }
+            this.writeLock.lock();
             // Escreve o número da operaçao primeiro
             this.os.writeInt(f.tag);
             // Escreve a taskid
@@ -43,12 +50,12 @@ public class Connection implements AutoCloseable {
             // Finaliza e envia
             this.os.flush();
         } finally {
-            // this.rwLock.writeLock().unlock();
+            this.writeLock.unlock();
         }
     }
 
     /*
-     * Receber Frame
+     * Receber Service.Frame
      */
     public Frame receive() throws IOException {
         int tag;
@@ -56,7 +63,7 @@ public class Connection implements AutoCloseable {
         int taskid;
         int mem;
         try {
-            this.rwLock.readLock().lock();
+            this.readLock.lock();
             tag = this.is.readInt();
             taskid = this.is.readInt();
             int nBytes = this.is.readInt();
@@ -64,7 +71,7 @@ public class Connection implements AutoCloseable {
             this.is.readFully(data);
         }
         finally {
-            this.rwLock.readLock().unlock();
+            this.readLock.unlock();
         }
         return new Frame(tag,taskid, data);
     }

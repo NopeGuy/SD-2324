@@ -1,3 +1,5 @@
+package Service;
+
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.HashMap;
@@ -18,9 +20,6 @@ public class ClientDemultiplexer {
         Queue<Frame> queue = new ArrayDeque<>();
         Condition c = l.newCondition();
 
-        public FrameClient() {
-
-        }
     }
 
     public ClientDemultiplexer(Connection conn) {

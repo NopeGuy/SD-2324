@@ -1,3 +1,5 @@
+package Service;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -49,26 +51,29 @@ public class Server {
                             String recieved_pass = user_pass[1];
 
                             if( !users.validatePassword(recieved_email, recieved_pass)){
-                                con.sendString( 1,0,"ERRO: Email e Password incorretos...");
+                                con.sendString( 2,0,"ERRO: Email e Password incorretos...");
                             } else {
-                                con.sendString( 1, 0,"Email e Password corretos");
+                                con.sendString( 2, 0,"Email e Password corretos");
                             }
                         // Register Request
-                        } else if ( f.tag == 2 ){
+                        }
+                        else if ( f.tag == 2 ){
                             String[] user_pass = new String(f.data).split(";;");
                             String recieved_user = user_pass[0];
                             String recieved_pass = user_pass[1];
 
                             users.addAccount(recieved_user, recieved_pass);
                             users.serialize("users.data");
-                            con.sendData(1, 0, "User criado".getBytes());
+                            con.sendData(3, 0, "User criado".getBytes());
                             username = recieved_user;
 
                         //  Executar JOB
-                        } else if( f.tag == 30 ) {
+                        }
+                        else if( f.tag == 30 ) {
                             tasksExecutor.addTask(f.data, con);
                         // Get status do Servidor
-                        }else if (f.tag == 40) {
+                        }
+                        else if (f.tag == 40) {
                             con.sendData(41, 0, tasksExecutor.getStatus());
                         // Alguma tag não existente
                         } else {

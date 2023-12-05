@@ -1,7 +1,8 @@
+package Service;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayDeque;
-import java.util.HashMap;
 import java.util.Queue;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -10,9 +11,11 @@ public class TasksExecutor implements Serializable {
 
     private final int MAX_MEMORY = 1 * (5000);
     private int ACTUAL_MEMORY = 0;
-    private final Queue<Task> taskQueue;
-    private final ReentrantLock lock;
-    private final Condition condition;
+    private Queue<Task> taskQueue;
+    private ReentrantLock readLock = new ReentrantLock();
+
+    private ReentrantLock writeLock = new ReentrantLock();
+    private Condition condition;
 
     private int taskId = 0;
 
@@ -46,8 +49,7 @@ public class TasksExecutor implements Serializable {
 
     public TasksExecutor() {
         taskQueue = new ArrayDeque<>();
-        lock = new ReentrantLock();
-        condition = lock.newCondition();
+        condition = readLock.newCondition();
 
         // Inicia a thread de execução
         Thread executorThread = new Thread(this::executeTasks);
@@ -55,42 +57,51 @@ public class TasksExecutor implements Serializable {
     }
 
     public void addTask(byte[] data, Connection c) {
-        lock.lock();
+
         try {
+            writeLock.lock();
             if (this.ACTUAL_MEMORY + data.length <= MAX_MEMORY) {
                 this.ACTUAL_MEMORY += data.length;
                 taskQueue.add(new Task(taskId++, data, c));
+                readLock.lock();
                 condition.signal();
+                readLock.unlock();
+                return;
             } else {
                 c.sendData(31, 0, "ERRO: SEM MEMORIA".getBytes());
             }
             condition.signal(); // Sinaliza à thread que há novas tarefas
         } catch (Exception e){}
         finally {
-            lock.unlock();
+            writeLock.unlock();
         }
     }
 
     public byte[] getStatus() {
-        return (this.ACTUAL_MEMORY + "/" + this.MAX_MEMORY).getBytes();
+        String resp = "Memória: " + this.ACTUAL_MEMORY + "/" + this.MAX_MEMORY +
+                    "\nNúmero de Processos a Aguardar: " + this.taskQueue.size();
+        return resp.getBytes();
     }
     private void executeTasks() {
             while (true) {
-                lock.lock();
+                if(Client.DEBUG) System.out.printf("Thread %d à espera de readLock\n", Thread.currentThread().getId());
+                readLock.lock();
+                if(Client.DEBUG) System.out.printf("Thread %d conseguiu o lock em executeTasks\n", Thread.currentThread().getId());
                 try {
                     while (taskQueue.isEmpty()) {
+                        if(Client.DEBUG) System.out.printf("Thread %d awaiting\n", Thread.currentThread().getId());
                         // Aguarda até que haja tarefas na fila
                         condition.await();
                     }
                     // Quando há tarefas, executa o comando
                     Task task = taskQueue.poll();
+                    if(Client.DEBUG) System.out.printf("Thread %d vai executar a TaskID = %d\n", Thread.currentThread().getId(), task.taskID);
+                    readLock.unlock();
                     task.executeTask();
                     this.ACTUAL_MEMORY -= task.data.length;
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     break;
-                } finally {
-                    lock.unlock();
                 }
             }
 
