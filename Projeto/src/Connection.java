@@ -17,12 +17,15 @@ public class Connection implements AutoCloseable {
     }
 
 
-    public void sendString(int tag, String d) throws IOException {
-        this.send(new Frame(tag, d.getBytes()));
+    public void sendData(int tag, int taskid, byte[] data) throws IOException {
+        this.send(new Frame(tag, taskid, data));
     }
-    public void sendData(int tag, byte[] data) throws IOException {
-        this.send(new Frame(tag, data));
+
+    public void sendString(int tag, int taskid, String info) throws IOException{
+        this.send(new Frame(tag, taskid, info.getBytes()));
     }
+
+
     /*
      * Envia a frame para o cliente
      */
@@ -31,6 +34,8 @@ public class Connection implements AutoCloseable {
             //this.rwLock.writeLock().lock();
             // Escreve o número da operaçao primeiro
             this.os.writeInt(f.tag);
+            // Escreve a taskid
+            this.os.writeInt(f.taskid);
             // Escreve a quantidade de bytes que vao ser enviados
             this.os.writeInt(f.data.length);
             // Envia os bytes
@@ -48,17 +53,20 @@ public class Connection implements AutoCloseable {
     public Frame receive() throws IOException {
         int tag;
         byte[] data;
+        int taskid;
+        int mem;
         try {
             this.rwLock.readLock().lock();
             tag = this.is.readInt();
-            int n = this.is.readInt();
-            data = new byte[n];
+            taskid = this.is.readInt();
+            int nBytes = this.is.readInt();
+            data = new byte[nBytes];
             this.is.readFully(data);
         }
         finally {
             this.rwLock.readLock().unlock();
         }
-        return new Frame(tag,data);
+        return new Frame(tag,taskid, data);
     }
 
     /*
