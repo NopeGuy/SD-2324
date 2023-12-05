@@ -11,7 +11,13 @@ public class Server {
     // EM MB
     private double MAX_MEMORY = 1000 * 10e6;
 
+    // IMPLEMENTAÇÃO DISTRIBUIDA
+    public Server(int MAX_MEMORY){
+        this.MAX_MEMORY = MAX_MEMORY;
 
+    }
+
+    // FUNCIONALIDADES AVANÇADAS
     public static void main(String[] args) throws Exception {
         ServerSocket server = new ServerSocket(12345);
         final Users users;
@@ -23,8 +29,6 @@ public class Server {
         else
             users = new Users();
 
-        ReentrantReadWriteLock memoryLock = new ReentrantReadWriteLock();
-        int memoryInUse = 0;
 
         TasksExecutor tasksExecutor = new TasksExecutor();
 
