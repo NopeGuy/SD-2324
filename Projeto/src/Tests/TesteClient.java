@@ -24,10 +24,10 @@ public class TesteClient {
 
         new Thread(() -> {
             int i = 0;
-            while(i < 5) {
+            while(i < 10) {
                 new Thread(() -> {
                     try {
-                        FileInputStream fis = new FileInputStream(new File("C:\\GetDeviceStatus.xml"));
+                        FileInputStream fis = new FileInputStream(new File("C:\\GetDeviceCap.xml"));
                         cd.send(30, 0, fis.readAllBytes());
                         Frame respostaTarefa = cd.receive(31);
                         System.out.println(new String(respostaTarefa.data));
@@ -45,15 +45,20 @@ public class TesteClient {
                 i++;
             }
         }).start();
-        Thread.sleep(1500);
+        Thread.sleep(4000);
         new Thread(() -> {
             int i = 0;
-            while(i < 5) {
+            while(i < 10) {
                 try {
                     cd.send(40, 0, new byte[0]);
                     Frame respostaTarefa = cd.receive(41);
                     System.out.println(new String(respostaTarefa.data));
                 } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
                 i++;
