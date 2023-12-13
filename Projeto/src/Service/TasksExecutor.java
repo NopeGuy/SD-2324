@@ -56,6 +56,10 @@ public class TasksExecutor implements Serializable {
         executorThread.start();
     }
 
+
+    /*
+     * Chamada para adicionar uma Task à queue
+     */
     public void addTask(byte[] data, Connection c) {
 
         try {
