@@ -49,7 +49,7 @@ public class CloudServer {
                         System.out.println("Frame f = " + f.tag + " recebida");
                         if(f.tag == 90) {
                             connectionsLock.lock();
-                            RemoteServer s = new RemoteServer(serversConnected.size(), 5000, con);
+                            RemoteServer s = new RemoteServer(serversConnected.size(), Integer.parseInt(new String(f.data)), con);
                             serversConnected.put(serversConnected.size(), s);
                             con.sendString(91, s.serverId, "");
                             connectionsLock.unlock();
@@ -208,31 +208,27 @@ public class CloudServer {
                                     break;
                                 }
                             }
-                            /*
-                            if (workerInfo.getAvailableMemory() < task.getMem()) {
-                                queueLock.lock();
-                                //Envia a próxima task na queue caso haja memória suficiente. Depois espera até ter
-                                // haver memória para a primeira. Só vê a próxima para evitar que a primeira fique à
-                                // para sempre
-                                if (!taskQueue.isEmpty()) {
-                                    Task nextTask = taskQueue.peek();
-                                    connectionsLock.lock();
-                                    if (clients.containsKey(task.getClient()) && nextTask.getMem() <= workerInfo.getAvailableMemory()) {
-                                        clientsLock.unlock();
-                                        nextTask = taskQueue.poll();
-                                        processTask(worker, workerInfo, nextTask);
-                                    } else {
-                                        clientsLock.unlock();
+                            if (executed = false ) {
+                                if(!taskQueue.isEmpty()){
+                                    Task prox = taskQueue.peek();
+                                    for(Map.Entry<Integer, RemoteServer> server : serversConnected.entrySet()){
+                                        RemoteServer s = server.getValue();
+                                        if(s.availiableMemory > prox.getMemory()) {
+                                            taskQueue.poll();
+                                            prox.executorServer = s.serverId;
+                                            s.connection.sendData(1000, prox.taskID, prox.data);
+                                            s.removeMemory(task.getMemory());
+                                            connectionsLock.unlock();
+
+                                            executed = true;
+                                            break;
+                                        }
                                     }
+                                    taskQueue.add(task);
                                 }
-                                taskQueueLock.unlock();
-                                memoryFreed.await();
-                                workersLock.unlock();
-                            } else {
-                                processTask(worker, workerInfo, task);
-                                workersLock.unlock();
-                                executed = true;
-                            }*/
+                                queueLock.unlock();
+                            }
+
                         }
                     } else {
                         connectionsLock.unlock();

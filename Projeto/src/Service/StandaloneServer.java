@@ -26,9 +26,17 @@ public class StandaloneServer {
         BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
         Connection c = new Connection(s);
 
+        String memory = (args.length > 0) ? args[0] : "5000";
+
+        try {
+            Integer.parseInt(memory);
+        }catch (Exception e){
+            System.out.println("Por favor execute com o argumento <memoria>");
+        }
+
         while(1 == 1){
             Connection con = new Connection(s);
-            con.sendString(90, -1, "{memory: 5000}");
+            con.sendString(90, -1, memory);
 
 
             try (con){
