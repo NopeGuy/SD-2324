@@ -20,6 +20,9 @@ public class Connection implements AutoCloseable {
         this.os = new DataOutputStream(new BufferedOutputStream(s.getOutputStream()));
     }
 
+    public String getClientInfo(){
+        return this.socket.getLocalAddress().getHostAddress() + ":" + this.socket.getPort();
+    }
 
     public void sendData(int tag, int taskid, byte[] data) throws IOException {
         this.send(new Frame(tag, taskid, data));

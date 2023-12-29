@@ -5,17 +5,18 @@ import java.net.Socket;
 
 
 public class Client {
-    public static final boolean DEBUG = false;
+    public static final boolean DEBUG = true;
 
 
     public static void main(String[] args) throws Exception {
-        Socket s = new Socket("localhost", 12345);
+        Socket s = new Socket("localhost", 10080);
         String username = null;
         String choice = "";
         BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
         Connection c = new Connection(s);
         ClientDemultiplexer cd = new ClientDemultiplexer(c);
         cd.start();
+        c.send(new Frame(100, -1, new byte[0]));
 
         while(username == null){
             clearConsole();

@@ -3,49 +3,28 @@ package Service;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class TasksExecutor implements Serializable {
 
-    private final int MAX_MEMORY = 1 * (5000);
+    private int MAX_MEMORY = 1 * (5000);
     private int ACTUAL_MEMORY = 0;
     private Queue<Task> taskQueue;
     private ReentrantLock readLock = new ReentrantLock();
 
     private ReentrantLock writeLock = new ReentrantLock();
+
+    private ReentrantLock executionLock = new ReentrantLock();
     private Condition condition;
 
     private int taskId = 0;
 
 
-    private class Task {
 
-        public int taskID;
-        public byte[] data;
-
-        private Connection c;
-
-        public Task(int id, byte[] programa, Connection c) {
-            this.taskID = id;
-            this.data = programa;
-            this.c = c;
-        }
-
-        public void executeTask(){
-            try{
-                byte[] out = sd23.JobFunction.execute(this.data);
-                this.c.sendData(31, taskID, out);
-            } catch (IOException e) {
-                // CONNECTION CLOSED Provavelment
-            } catch (Exception exc) {
-                // ERRO
-            }
-
-
-        }
-    }
 
     public TasksExecutor() {
         taskQueue = new ArrayDeque<>();
@@ -56,6 +35,11 @@ public class TasksExecutor implements Serializable {
         executorThread.start();
     }
 
+    /*
+     * Future proof para Cloud
+     */
+    public void setMAX_MEMORY(int newMaxMemory){ this.MAX_MEMORY = newMaxMemory; }
+
 
     /*
      * Chamada para adicionar uma Task à queue
@@ -64,9 +48,9 @@ public class TasksExecutor implements Serializable {
 
         try {
             writeLock.lock();
-            if (this.ACTUAL_MEMORY + data.length <= MAX_MEMORY) {
-                this.ACTUAL_MEMORY += data.length;
-                taskQueue.add(new Task(taskId++, data, c));
+            if (data.length < MAX_MEMORY) {
+                //this.ACTUAL_MEMORY += data.length;
+                //taskQueue.add(new Task(taskId++, data, c));
                 readLock.lock();
                 condition.signal();
                 readLock.unlock();
@@ -98,11 +82,19 @@ public class TasksExecutor implements Serializable {
                         condition.await();
                     }
                     // Quando há tarefas, executa o comando
-                    Task task = taskQueue.poll();
-                    if(Client.DEBUG) System.out.printf("Thread %d vai executar a TaskID = %d\n", Thread.currentThread().getId(), task.taskID);
+                    List<Task> listaTasks = new ArrayList<>();
+                    if(Client.DEBUG) System.out.printf("Existem %d tasks por começar...", taskQueue.size());
+                    //while(!taskQueue.isEmpty() && (listaTasks.isEmpty() ||
+                        //    listaTasks.stream().mapToDouble(Task::getLength).sum() + this.ACTUAL_MEMORY < this.MAX_MEMORY))
+                       // if(taskQueue.peek() != null && taskQueue.peek().getLength() + this.ACTUAL_MEMORY < this.MAX_MEMORY)
+                        //    listaTasks.add(taskQueue.poll());
+                    List<Thread> threads = new ArrayList<>();
+                    for(Task t : listaTasks) threads.add(new Thread(t::executeTask));
+                    if(Client.DEBUG) System.out.printf("A começar %d threads...", threads.size());
+                    for(Thread tr : threads) tr.start();
+                    for(Thread tr : threads) tr.join();
+
                     readLock.unlock();
-                    task.executeTask();
-                    this.ACTUAL_MEMORY -= task.data.length;
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     break;

@@ -20,9 +20,9 @@ public class Server {
     // FUNCIONALIDADES AVANÇADAS
     public static void main(String[] args) throws Exception {
         ServerSocket server = new ServerSocket(12345);
-        final Users users;
 
         File u = new File("users.data");
+        final Users users;
 
         if(u.exists())
             users = Users.deserialize("users.data");
