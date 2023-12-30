@@ -30,7 +30,7 @@ public class CloudServer {
         BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
 
 
-        while (1 == 1) {
+        while (true) {
             System.out.println("CLOUD SERVER MANAGER OPENED ON PORT 10080");
             Socket socket = server.accept();
             Connection con = new Connection(socket);
@@ -105,6 +105,7 @@ public class CloudServer {
     }
 
 
+
     private static void handleClient(Connection clientConnection) throws IOException, ClassNotFoundException {
 
         File u = new File("users.data");
@@ -150,11 +151,24 @@ public class CloudServer {
                     try {
                         queueLock.lock();
                         Task t = new Task(taskId, f.data, clientConnection);
-                        taskQueue.add(t);
-                        tasksHistory.put(taskId++, t);
-                        if(Client.DEBUG){ System.out.println("Adicionar task à Queue"); }
-                        queueChange.signal();
-                        if(Client.DEBUG){ System.out.println("Signaling"); }
+                        connectionsLock.lock();
+                        RemoteServer s = null;
+                        for(Map.Entry<Integer, RemoteServer> server : serversConnected.entrySet()){
+                            RemoteServer sv = server.getValue();
+                            if(sv.serverMemory > f.data.length) s = sv;
+                        }
+                        connectionsLock.unlock();
+
+                        if (s == null) {
+                            clientConnection.sendString(31, -1, "Não existe nenhum servidor com essa memória.");
+                        } else {
+                            taskQueue.add(t);
+                            tasksHistory.put(taskId++, t);
+                            if(Client.DEBUG){ System.out.println("Adicionar task à Queue"); }
+                            queueChange.signal();
+                            if(Client.DEBUG){ System.out.println("Signaling"); }
+                        }
+
 
                     }finally {
                         queueLock.unlock();
@@ -237,6 +251,7 @@ public class CloudServer {
                             }
 
                         }else{
+                            if(Client.DEBUG) System.out.println("Não encontrei nenhum serivodr disponivel...");
                             try {
                                 queueChange.await();
                             } catch (InterruptedException e) {
@@ -276,7 +291,7 @@ public class CloudServer {
                     System.err.println("Erro ao enviar para worker: " + e.getMessage());
                 }
             }
-        }, "TaskDistributionThread").start();
+        }).start();
 
 
     }
