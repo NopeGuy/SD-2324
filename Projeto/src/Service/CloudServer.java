@@ -55,7 +55,7 @@ public class CloudServer {
                                 System.out.println("Servidor recebeu alguma coisa do StandaloneServer");
                                 Task t = tasksHistory.get(f.taskid);
                                 serversConnected.get(t.executorServer).addMemory(t.getMemory());
-                                t.c.sendString(31, f.taskid, "A task com id = " + f.taskid + " terminou com sucesso..");
+                                t.c.sendData(31, f.taskid, f.data);
                             } finally {
                                 connectionsLock.unlock();
                             }

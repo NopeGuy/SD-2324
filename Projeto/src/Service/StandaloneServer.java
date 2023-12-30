@@ -52,6 +52,7 @@ public class StandaloneServer {
                                 byte[] resp = sd23.JobFunction.execute(f.data);
                                 // Resposta
                                 con.sendData(1001, f.taskid, resp);
+                                System.out.println("TaskID = " + f.taskid + " => " + new String(resp));
                             } catch (JobFunctionException e) {
                                 System.out.println("JobFunctionException -> " + e.getMessage());
                                 try {

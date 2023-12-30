@@ -2,6 +2,7 @@ package Service;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.Scanner;
 
 
 public class Client {
@@ -61,7 +62,7 @@ public class Client {
             System.out.printf(
                     "\n\n*MENU DO CLIENTE (username=%s)*\n" +
                             "1. Executar tarefa\n" +
-                            "2. Ver estado das Tarefas\n" +
+                            "2. Executar tarefas de ficheiro\n" +
                             "3. Ver estado dos Servidores\n" +
                             "9. Sair\n" +
                             "Opção: "
@@ -100,13 +101,53 @@ public class Client {
                         }).start();
 
             } else if( choice.equals("2")) {
+                System.out.println("Introduza a localização do ficheiro de input: ");
+                String inputFile = stdin.readLine();
+                System.out.println("Introduza a localização do ficheiro de output: ");
+                String outputFile = stdin.readLine();
+                FileInputStream fis = new FileInputStream(new File(inputFile));
+                FileOutputStream fos = new FileOutputStream(new File(outputFile));
+
+                Scanner sc = new Scanner(fis);
+                while(sc.hasNextLine()){
+                    String[] lineArgs = sc.nextLine().split(",");
+                    int id = Integer.parseInt(lineArgs[0]);
+
+                    new Thread(() -> {
+                        boolean tarefaEnviada = false;
+                        while (!tarefaEnviada) {
+                            try {
+                                cd.send(30, 0, lineArgs[2].getBytes());
+
+                                Frame respostaTarefa = cd.receive(31);
+
+                                if (new String(respostaTarefa.data).startsWith("ERRO")) {
+                                    System.out.println("Erro do Servidor (tag=" + respostaTarefa.tag + "): " + new String(respostaTarefa.data));
+                                } else {
+                                    System.out.printf("Tarefa com id = %d terminou. Resposta: ", respostaTarefa.taskid);
+                                    //System.out.println(new String(respostaTarefa.data));
+                                    String write = id + "," ;
+                                    fos.write(write.getBytes());
+                                    fos.write(respostaTarefa.data);
+                                    fos.write("\n".getBytes());
+                                }
+                            } catch (Exception e) {
+                                System.out.println("Não foi possível enviar a tarefa: " + e.getMessage());
+                            }
+                            tarefaEnviada = true;
+
+                        }
+
+
+                    }).start();
+                }
+
+            } else if (choice.equals("3")) {
                 if(DEBUG) System.out.println("Enviar tag=40");
                 cd.send(40, 0, new byte[0]);
                 if(DEBUG) System.out.println("Tag=40 enviada");
                 System.out.println("Status do Servidor (ATUAL/MAX)\n" +
                         new String(cd.receive(41).data));
-            } else if (choice.equals("3")) {
-
             } else if (choice.equals("9")){
                 c.close();
             } else{
