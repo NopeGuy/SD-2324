@@ -52,22 +52,28 @@ public class CloudServer {
                         } else if(f.tag == 1001) {
                             try {
                                 connectionsLock.lock();
+
                                 System.out.println("Servidor recebeu alguma coisa do StandaloneServer");
                                 Task t = tasksHistory.get(f.taskid);
                                 serversConnected.get(t.executorServer).addMemory(t.getMemory());
                                 t.c.sendData(31, f.taskid, f.data);
+                                queueChange.signal();
                             } finally {
                                 connectionsLock.unlock();
                             }
                         } else if(f.tag == 1002) {
                             try {
                                 connectionsLock.lock();
+
                                 System.out.println("Servidor recebeu alguma coisa do StandaloneServer");
                                 Task t = tasksHistory.get(f.taskid);
                                 serversConnected.get(t.executorServer).addMemory(t.getMemory());
                                 t.c.sendString(31, f.taskid, "A taskid = " + f.taskid + " retornou o seguinte erro: " + new String(f.data));
+                                queueChange.signal();
+                                if(Client.DEBUG) System.out.println("Signal sent to queueChange");
                             } finally {
                                 connectionsLock.unlock();
+
                             }
                         }else if (f.tag == 100 ){
                             handleClient(con);
@@ -231,6 +237,11 @@ public class CloudServer {
                             }
 
                         }else{
+                            try {
+                                queueChange.await();
+                            } catch (InterruptedException e) {
+                                System.err.println("Thread interrupted: " + e.getMessage());
+                            }
                             queueLock.unlock();
                             connectionsLock.unlock();
                         }

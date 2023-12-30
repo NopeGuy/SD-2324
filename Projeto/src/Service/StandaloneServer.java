@@ -18,7 +18,7 @@ public class StandaloneServer {
 
     public static void main(String[] args) throws Exception {
         Socket s = new Socket("localhost", 10080);
-        
+
         String memory = (args.length > 0) ? args[0] : "5000";
 
         try {
