@@ -52,8 +52,16 @@ public class StandaloneServer {
                                 byte[] resp = sd23.JobFunction.execute(f.data);
                                 // Resposta
                                 con.sendData(1001, f.taskid, resp);
-                            } catch (JobFunctionException | IOException e) {
-                                throw new RuntimeException(e);
+                            } catch (JobFunctionException e) {
+                                System.out.println("JobFunctionException -> " + e.getMessage());
+                                try {
+
+                                    con.sendString(1002, f.taskid, e.getMessage());
+                                } catch (IOException ex) {
+                                    System.out.println("Não foi possível informar o CloudServer acerca do termino da taskid = " + f.taskid);
+                                }
+                            } catch (IOException e){
+                                System.out.println("Não foi possível informar o CloudServer acerca do termino da taskid = " + f.taskid);
                             }
                         }).start();
                     // Get status do Servidor

@@ -32,6 +32,10 @@ public class Connection implements AutoCloseable {
         this.send(new Frame(tag, taskid, info.getBytes()));
     }
 
+    public Socket getSocket(){
+        return this.socket;
+    }
+
 
     /*
      * Envia a frame para o cliente

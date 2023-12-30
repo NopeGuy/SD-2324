@@ -17,19 +17,12 @@ import java.util.concurrent.locks.ReentrantLock;
 public class CloudServer {
 
     private static HashMap<Integer, RemoteServer> serversConnected = new HashMap<>();
-
     private static HashMap<String, Connection> clientsConnected = new HashMap<>();
-
     private static Queue<Task> taskQueue = new ArrayDeque<>();
-
     private static HashMap<Integer, Task> tasksHistory = new HashMap<>();
-
     private static ReentrantLock connectionsLock = new ReentrantLock();
-
     private static ReentrantLock queueLock = new ReentrantLock();
-
     private static Condition queueChange = queueLock.newCondition();
-
     private static int taskId = 0;
     public static void main(String[] args) throws IOException, ClassNotFoundException {
         ServerSocket server = new ServerSocket(10080);
@@ -66,7 +59,17 @@ public class CloudServer {
                             } finally {
                                 connectionsLock.unlock();
                             }
-                        } else if (f.tag == 100 ){
+                        } else if(f.tag == 1002) {
+                            try {
+                                connectionsLock.lock();
+                                System.out.println("Servidor recebeu alguma coisa do StandaloneServer");
+                                Task t = tasksHistory.get(f.taskid);
+                                serversConnected.get(t.executorServer).addMemory(t.getMemory());
+                                t.c.sendString(31, f.taskid, "A taskid = " + f.taskid + " retornou o seguinte erro: " + new String(f.data));
+                            } finally {
+                                connectionsLock.unlock();
+                            }
+                        }else if (f.tag == 100 ){
                             handleClient(con);
                         }
 
@@ -74,7 +77,17 @@ public class CloudServer {
 
                     }
                 } catch( IOException error ){
-                    System.out.println("Error com o servidor " + socket.getLocalAddress() + " :" + error.getMessage());
+                    System.out.println("Error com o servidor " + socket.getLocalAddress() + ":" + socket.getPort() + " :" + error.getMessage());
+                    //Remover servidor
+                    connectionsLock.lock();
+                    for(Map.Entry<Integer, RemoteServer> sv : serversConnected.entrySet()){
+                        RemoteServer actual = sv.getValue();
+                        if (actual.connection.getSocket().getPort() == socket.getPort() ) {
+                            serversConnected.remove(sv.getKey());
+                            System.out.println("Removi o Server " + actual.serverId + " do HashMap.");
+                        }
+                    }
+                    connectionsLock.unlock();
                 } catch (ClassNotFoundException e) {
                     throw new RuntimeException(e);
                 }
@@ -123,12 +136,9 @@ public class CloudServer {
                     String recieved_user = user_pass[0];
                     String recieved_pass = user_pass[1];
 
-                    //users.addAccount(recieved_user, recieved_pass);
-                    //users.serialize("users.data");
+                    users.addAccount(recieved_user, recieved_pass);
+                    users.serialize("users.data");
                     clientConnection.sendData(3, 0, "User criado".getBytes());
-                    //username = recieved_user;
-
-                    //  Executar JOB
                 }
                 else if( f.tag == 30 ) {
                     try {
@@ -190,25 +200,39 @@ public class CloudServer {
                         }
                     }
 
-                    Task task = taskQueue.poll();
-                    queueLock.unlock();
+                    Task task = taskQueue.peek();
+                    if(Client.DEBUG) System.out.println("Picked taskid = " + task.taskID);
                     connectionsLock.lock();
                     if (task != null) {
                         boolean executed = false;
-                        while (!executed) {
-                            for(Map.Entry<Integer, RemoteServer> server : serversConnected.entrySet()){
-                                RemoteServer s = server.getValue();
-                                if(s.availiableMemory > task.getMemory()) {
-                                    task.executorServer = s.serverId;
-                                    s.connection.sendData(1000, task.taskID, task.data);
-                                    s.removeMemory(task.getMemory());
-                                    connectionsLock.unlock();
-
-                                    executed = true;
-                                    break;
-                                }
+                        RemoteServer avaliableServer = null;
+                        for(Map.Entry<Integer, RemoteServer> server : serversConnected.entrySet()){
+                            RemoteServer s = server.getValue();
+                            if(s.availiableMemory > task.getMemory()) {
+                                avaliableServer = s;
+                                break;
                             }
+                        }
+                        if(avaliableServer != null){
+                            taskQueue.poll();
+                            queueLock.unlock();
+                            try {
+                                task.executorServer = avaliableServer.serverId;
+                                avaliableServer.connection.sendData(1000, task.taskID, task.data);
+                                avaliableServer.removeMemory(task.getMemory());
+
+                                executed = true;
+                            } finally {
+                                connectionsLock.unlock();
+                            }
+
+                        }else{
+                            queueLock.unlock();
+                            connectionsLock.unlock();
+                        }
+                            /*
                             if (executed = false ) {
+
                                 if(!taskQueue.isEmpty()){
                                     Task prox = taskQueue.peek();
                                     for(Map.Entry<Integer, RemoteServer> server : serversConnected.entrySet()){
@@ -227,9 +251,9 @@ public class CloudServer {
                                     taskQueue.add(task);
                                 }
                                 queueLock.unlock();
-                            }
+                            }*/
 
-                        }
+
                     } else {
                         connectionsLock.unlock();
                     }
