@@ -157,13 +157,17 @@ public class CloudServer {
                 }
                 else if (f.tag == 40) {
                     connectionsLock.lock();
+                    queueLock.lock();
                     String status = "";
                     for(Map.Entry<Integer, RemoteServer> server : serversConnected.entrySet()){
                         RemoteServer s = server.getValue();
                         status += "Servidor " + s.serverId + ": " + s.availiableMemory + "/" + s.serverMemory + "\n";
                     }
-                    if(status.equals( "")) status = "Sem servidores conectados.";
+                    if(status.equals( "")) status = "Sem servidores conectados.\n";
+                    status += "Tarefas à aguardar execução: " + taskQueue.size();
+
                     connectionsLock.unlock();
+                    queueLock.unlock();
                     clientConnection.sendString(41, 0, status);
                     // Alguma tag não existente
                 } else {

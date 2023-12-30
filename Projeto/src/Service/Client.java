@@ -2,6 +2,7 @@ package Service;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
 
@@ -108,6 +109,8 @@ public class Client {
                 FileInputStream fis = new FileInputStream(new File(inputFile));
                 FileOutputStream fos = new FileOutputStream(new File(outputFile));
 
+                fos.write("id_tarefa,tempo_execução,resultado\n".getBytes(StandardCharsets.UTF_8));
+
                 Scanner sc = new Scanner(fis);
                 while(sc.hasNextLine()){
                     String[] lineArgs = sc.nextLine().split(",");
@@ -126,9 +129,8 @@ public class Client {
                                 } else {
                                     System.out.printf("Tarefa com id = %d terminou. Resposta: ", respostaTarefa.taskid);
                                     //System.out.println(new String(respostaTarefa.data));
-                                    String write = id + "," ;
-                                    fos.write(write.getBytes());
-                                    fos.write(respostaTarefa.data);
+                                    String write = id + "," + new String(respostaTarefa.data) ;
+                                    fos.write(write.getBytes(StandardCharsets.UTF_8));
                                     fos.write("\n".getBytes());
                                 }
                             } catch (Exception e) {

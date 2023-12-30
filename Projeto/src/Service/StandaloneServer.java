@@ -1,5 +1,6 @@
 package Service;
 
+import sd23.JobFunction;
 import sd23.JobFunctionException;
 
 import java.io.BufferedReader;
@@ -14,18 +15,10 @@ public class StandaloneServer {
     // EM MB
     private double MAX_MEMORY = 1000 * 10e6;
 
-    // IMPLEMENTAÇÃO DISTRIBUIDA
-    public StandaloneServer(int MAX_MEMORY){
-        this.MAX_MEMORY = MAX_MEMORY;
-
-    }
 
     public static void main(String[] args) throws Exception {
         Socket s = new Socket("localhost", 10080);
-
-        BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
-        Connection c = new Connection(s);
-
+        
         String memory = (args.length > 0) ? args[0] : "5000";
 
         try {
@@ -49,9 +42,11 @@ public class StandaloneServer {
 
                         new Thread(() -> {
                             try {
-                                byte[] resp = sd23.JobFunction.execute(f.data);
+                                long startTime = System.currentTimeMillis();
+                                byte[] resp = JobFunction.execute(f.data);
+                                long endTime = System.currentTimeMillis();
                                 // Resposta
-                                con.sendData(1001, f.taskid, resp);
+                                con.sendString(1001, f.taskid, (endTime-startTime)/1000 + "," + new String(resp));
                                 System.out.println("TaskID = " + f.taskid + " => " + new String(resp));
                             } catch (JobFunctionException e) {
                                 System.out.println("JobFunctionException -> " + e.getMessage());
