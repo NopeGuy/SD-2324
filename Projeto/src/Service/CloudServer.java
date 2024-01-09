@@ -57,7 +57,7 @@ public class CloudServer {
                                 Task t = tasksHistory.get(f.taskid);
                                 serversConnected.get(t.executorServer).addMemory(t.getMemory());
                                 t.c.sendData(31, f.taskid, f.data);
-                                queueChange.signal();
+                                //queueChange.signal();
                             } finally {
                                 connectionsLock.unlock();
                             }
@@ -252,11 +252,14 @@ public class CloudServer {
 
                         }else{
                             if(Client.DEBUG) System.out.println("Não encontrei nenhum serivodr disponivel...");
+                            /* tentativa de arranjar melhor forma nisto
                             try {
                                 queueChange.await();
                             } catch (InterruptedException e) {
                                 System.err.println("Thread interrupted: " + e.getMessage());
                             }
+                            */
+
                             queueLock.unlock();
                             connectionsLock.unlock();
                         }

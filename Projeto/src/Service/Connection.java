@@ -1,5 +1,9 @@
 package Service;
 
+/*
+Codigo maioritariamente das aulas
+ */
+
 import java.io.*;
 import java.net.Socket;
 import java.util.concurrent.locks.ReadWriteLock;

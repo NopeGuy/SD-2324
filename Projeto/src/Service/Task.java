@@ -18,7 +18,10 @@ public class Task {
 
 
     public int getMemory(){ return this.data.length; }
+
+    // Only used in StandaloneServer before
     public void executeTask(){
+
         try{
             if(Client.DEBUG) System.out.printf("Thread %d vai executar a TaskID = %d\n", Thread.currentThread().getId(), this.taskID);
             byte[] out = sd23.JobFunction.execute(this.data);
