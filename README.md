@@ -56,5 +56,6 @@ Note: The StandaloneServer accepts an optional command-line argument for memory 
 - The `JobFunction` class provides a sample job execution function for tasks.
 
 # Contributors
-- Luís Vilas @LuisFilipe6
-- Luís F. @NopeGuy
+- [@LuisFilipe6](https://github.com/LuisFilipe6)
+- [@NopeGuy](https://github.com/NopeGuy)
+- [@Bernazad](https://github.com/HBernaH)
